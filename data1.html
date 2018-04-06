@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>Data one</title>
+<style>
+	body { margin: 0; }
+	canvas { width: 100%; height: 100% }
+</style>
+</head>
+<body>
+
+<script src="three.js"></script>
+<script src="data.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+var graphDimensions = {
+	w:50,
+	d:500,
+	h:600
+};
+
+var datalabels = {
+  labels: {
+  	y: [""],
+    x: [""],
+    z: ["PRP","ERP"]
+  }
+};
+
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+camera.position.z = 500;
+
+
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setClearColor( 0xffffff );
+document.body.appendChild( renderer.domElement );
+
+controls = new THREE.OrbitControls( camera, renderer.domElement );
+controls.enableDamping = true;
+controls.dampingFactor = 0.25;
+controls.panningMode = THREE.HorizontalPanning;
+
+var pl = new THREE.PlaneGeometry( 50, 500, 1, 208 );
+for (var i = 0, l = pl.vertices.length; i < l; i++) {
+    pl.vertices[i].z = data[i];
+}
+
+var faceColors = [];
+
+for (var x= 0; x <pl.faces.length; x++){
+		pl.faces[x].vertexColors[0] = new THREE.Color(0x314141);
+		pl.faces[x].vertexColors[1] = new THREE.Color(0x337535);
+		pl.faces[x].vertexColors[2] = new THREE.Color(0x357932);
+	}
+
+var material = new THREE.MeshBasicMaterial( {vertexColors: THREE.VertexColors, side: THREE.DoubleSide} );
+var plane = new THREE.Mesh( pl, material );
+plane.rotation.x = -Math.PI/2;
+plane.position.y = -graphDimensions.h/2;
+plane.rotation.z = Math.PI/2;
+
+scene.add( plane );
+
+camera.lookAt( scene.position );
+
+function labelAxis(width, data, direction){
+
+  var separator = 2*width/data.length,
+			p = {
+				x:0,
+				y:0,
+				z:0
+			},
+			dobj = new THREE.Object3D();
+
+  for ( var i = 0; i < data.length; i ++ ) {
+		var label = makeTextSprite(data[i]);
+
+		label.position.set(p.x,p.y,p.z);
+
+		dobj.add( label );
+		if (direction=="y"){
+			p[direction]+=separator;
+		}else{
+			p[direction]-=separator;
+		}
+
+  }
+  return dobj;
+}
+
+// This was written by Lee Stemkoski
+// https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
+function makeTextSprite( message, parameters )
+{
+	if ( parameters === undefined ) parameters = {};
+
+	var fontface = parameters["fontface"] || "Helvetica";
+	var fontsize = parameters["fontsize"] || 70;
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+	context.font = fontsize + "px " + fontface;
+
+	// get size data (height depends only on font size)
+	var metrics = context.measureText( message );
+	var textWidth = metrics.width;
+
+
+	// text color
+	context.fillStyle = "rgba(0, 0, 0, 1.0)";
+	context.fillText( message, 0, fontsize);
+
+	// canvas contents will be used for a texture
+	var texture = new THREE.Texture(canvas)
+			texture.minFilter = THREE.LinearFilter;
+			texture.needsUpdate = true;
+
+	var spriteMaterial = new THREE.SpriteMaterial({ map: texture, useScreenCoordinates: false});
+	var sprite = new THREE.Sprite( spriteMaterial );
+	sprite.scale.set(100,50,1.0);
+	return sprite;
+}
+
+function createAGrid(opts){
+//autor: Sue Lockwood
+var config = opts || {
+			height: 10,
+			width: 10,
+			linesHeight: 10,
+			linesWidth: 10,
+			color: 0x000000
+		};
+
+		var material = new THREE.LineBasicMaterial({
+			color: config.color,
+			opacity: 0.2
+		});
+
+		var gridObject = new THREE.Object3D(),
+				gridGeo= new THREE.Geometry(),
+				stepw = 2*config.width/config.linesWidth,
+				steph = 2*config.height/config.linesHeight;
+
+		//width
+		for ( var i = - config.width; i <= config.width; i += stepw ) {
+				gridGeo.vertices.push( new THREE.Vector3( - config.height, i,0 ) );
+				gridGeo.vertices.push( new THREE.Vector3(  config.height, i,0 ) );
+
+		}
+		//height
+		for ( var i = - config.height; i <= config.height; i += steph ) {
+				gridGeo.vertices.push( new THREE.Vector3( i,- config.width,0 ) );
+				gridGeo.vertices.push( new THREE.Vector3( i, config.width, 0 ) );
+		}
+
+		var line = new THREE.Line( gridGeo, material, THREE.LinePieces );
+		gridObject.add(line);
+		return gridObject;
+}
+
+function gridInit(){
+//autor: Sue Lockwood
+	var boundingGrid = new THREE.Object3D(),
+			depth = graphDimensions.w/2, //depth
+			width = graphDimensions.d/2, //width
+			height = graphDimensions.h/2, //height
+			a =datalabels.labels.y.length,
+			b= datalabels.labels.x.length,
+			c= datalabels.labels.z.length;
+
+	//pink
+	newGridXY = createAGrid({
+				height: width,
+				width: height,
+				linesHeight: 10,
+				linesWidth: 10,
+				color: 0xcccccc
+			});
+			//newGridXY.position.y = height;
+	newGridXY.position.z = -depth;
+	boundingGrid.add(newGridXY);
+
+	//blue
+	var newGridYZ = createAGrid({
+				height: width,
+				width: depth,
+				linesHeight: 10,
+				linesWidth: c,
+				color: 0xcccccc
+			});
+	newGridYZ.rotation.x = Math.PI/2;
+	newGridYZ.position.y = -height;
+	boundingGrid.add(newGridYZ);
+
+	//green
+	var newGridXZ = createAGrid({
+				height: depth,
+				width: height,
+				linesHeight: c,
+				linesWidth: 10,
+				color: 0xcccccc
+			});
+
+			newGridXZ.position.x = width;
+			//newGridXZ.position.y = height;
+	 		newGridXZ.rotation.y = Math.PI/2;
+			boundingGrid.add(newGridXZ);
+
+	scene.add(boundingGrid);
+
+
+	var labelsW = labelAxis(width, datalabels.labels.x,"x");
+			labelsW.position.x = width+40;
+			labelsW.position.y = -height -40;
+			labelsW.position.z = depth;
+			scene.add(labelsW);
+
+	var labelsH = labelAxis(height, datalabels.labels.y,"y");
+			labelsH.position.x = width;
+			labelsH.position.y = - height +(2*height/a)-20;
+			labelsH.position.z = depth;
+			scene.add(labelsH);
+
+	var labelsD = labelAxis(depth, datalabels.labels.z, "z");
+			labelsD.position.x = width;
+			labelsD.position.y = -(height)-40;
+			labelsD.position.z = depth-40;
+			scene.add(labelsD);
+};
+window.addEventListener( 'resize', function () {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}, false );
+			
+function animate() {
+requestAnimationFrame( animate );
+controls.update();
+renderer.render( scene, camera );
+}
+
+
+gridInit();
+animate();
+</script>
+</body>
+</html>
