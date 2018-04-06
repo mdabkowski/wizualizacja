@@ -67,7 +67,8 @@ scene.add( plane );
 camera.lookAt( scene.position );
 
 function labelAxis(width, data, direction){
-
+/*autor: Sue Lockwood
+https://github.com/deathbearbrown/learning-three-js-blogpost*/
   var separator = 2*width/data.length,
 			p = {
 				x:0,
@@ -125,7 +126,8 @@ function makeTextSprite( message, parameters )
 }
 
 function createAGrid(opts){
-//autor: Sue Lockwood
+/*autor: Sue Lockwood
+https://github.com/deathbearbrown/learning-three-js-blogpost*/
 var config = opts || {
 			height: 10,
 			width: 10,
@@ -162,7 +164,8 @@ var config = opts || {
 }
 
 function gridInit(){
-//autor: Sue Lockwood
+/*autor: Sue Lockwood
+https://github.com/deathbearbrown/learning-three-js-blogpost*/
 	var boundingGrid = new THREE.Object3D(),
 			depth = graphDimensions.w/2, //depth
 			width = graphDimensions.d/2, //width
